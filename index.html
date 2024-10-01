@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple E-Commerce Website</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    nav { background-color: #333; color: white; padding: 10px; text-align: center; }
+    nav a { color: white; margin: 0 15px; text-decoration: none; }
+    .container { padding: 20px; }
+    .products { display: flex; justify-content: space-around; }
+    .product { border: 1px solid #ddd; padding: 10px; width: 30%; }
+    .product img { max-width: 100%; }
+    .thank-you, .contact, .about, .cart { display: none; }
+    .cart-items { margin: 20px 0; }
+    .cart-items li { list-style: none; }
+    .contact-form { max-width: 400px; margin: 0 auto; }
+    .contact-form label { display: block; margin-top: 10px; font-weight: bold; }
+    .contact-form input, .contact-form textarea { width: 100%; padding: 10px; margin-top: 5px; }
+    .contact-form input[type="submit"] { background-color: #333; color: white; border: none; cursor: pointer; margin-top: 20px; }
+    .contact-form input[type="submit"]:hover { background-color: #555; }
+    .error { color: red; font-size: 0.9em; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="#" onclick="showPage('about')">About</a>
+    <a href="#" onclick="showPage('products')">Products</a>
+    <a href="#" onclick="showPage('contact')">Contact</a>
+    <a href="#" onclick="showPage('cart')">Cart</a>
+  </nav>
+
+  <div class="container">
+    
+    <!-- About Page -->
+    <div class="about">
+      <h2>About Us</h2>
+      <p>Welcome to our e-commerce store! We provide high-quality products at the best prices.</p>
+    </div>
+    
+    <!-- Product Page -->
+    <div class="products">
+      <div class="product">
+        <h3>Product 1</h3>
+        <img src="images\product1.jpg" alt="Product 1">
+        <p>Price: $20</p>
+        <button onclick="addToCart('Product 1', 20)">Add to Cart</button>
+      </div>
+      <div class="product">
+        <h3>Product 2</h3>
+        <img src="images\product2.jpg" alt="Product 2">
+        <p>Price: $30</p>
+        <button onclick="addToCart('Product 2', 30)">Add to Cart</button>
+      </div>
+      <div class="product">
+        <h3>Product 3</h3>
+        <img src="images\product3.jpg" alt="Product 3">
+        <p>Price: $40</p>
+        <button onclick="addToCart('Product 3', 40)">Add to Cart</button>
+      </div>
+    </div>
+    
+    <!-- Contact Form Page -->
+    <div class="contact">
+      <h2>Contact Us</h2>
+      <form class="contact-form" id="contactForm" onsubmit="submitForm(event)">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        <span class="error" id="nameError"></span>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        <span class="error" id="emailError"></span>
+
+        <label for="message">Message:</label>
+        <textarea id="message" name="message" rows="5" required></textarea>
+        <span class="error" id="messageError"></span>
+
+        <input type="submit" value="Submit">
+      </form>
+    </div>
+    
+    <!-- Cart Page -->
+    <div class="cart">
+      <h2>Your Cart</h2>
+      <ul class="cart-items"></ul>
+      <button onclick="purchase()">Purchase</button>
+    </div>
+
+    <!-- Thank You Page -->
+    <div class="thank-you">
+      <h2>Thank You for Your Purchase!</h2>
+      <p>Your order has been placed successfully.</p>
+    </div>
+
+  </div>
+
+  <script>
+    // Data Layer
+    window.dataLayer = window.dataLayer || [];
+
+    // Cart Array
+    let cart = [];
+
+    // Function to show specific pages
+    function showPage(page) {
+      document.querySelector('.about').style.display = 'none';
+      document.querySelector('.products').style.display = 'none';
+      document.querySelector('.contact').style.display = 'none';
+      document.querySelector('.cart').style.display = 'none';
+      document.querySelector('.thank-you').style.display = 'none';
+
+      document.querySelector(`.${page}`).style.display = 'block';
+
+      if (page === 'cart') {
+        updateCartDisplay();
+      }
+    }
+
+    // Function to add product to cart
+    function addToCart(productName, price) {
+      cart.push({ productName, price });
+
+      // Data layer push for 'addToCart' event
+      window.dataLayer.push({
+        'event': 'addToCart',
+        'ecommerce': {
+          'currencyCode': 'USD',
+          'add': {
+            'products': [{
+              'name': productName,
+              'price': price
+            }]
+          }
+        }
+      });
+
+      alert(`${productName} has been added to your cart!`);
+    }
+
+    // Function to display cart items
+    function updateCartDisplay() {
+      const cartItemsEl = document.querySelector('.cart-items');
+      cartItemsEl.innerHTML = '';
+
+      if (cart.length === 0) {
+        cartItemsEl.innerHTML = '<li>Your cart is empty.</li>';
+        return;
+      }
+
+      cart.forEach(item => {
+        cartItemsEl.innerHTML += `<li>${item.productName} - $${item.price}</li>`;
+      });
+    }
+
+    // Function to purchase items in the cart
+    function purchase() {
+      if (cart.length === 0) {
+        alert('Your cart is empty!');
+        return;
+      }
+
+      const total = cart.reduce((sum, item) => sum + item.price, 0);
+
+      // Data layer push for 'purchase' event
+      window.dataLayer.push({
+        'event': 'purchase',
+        'ecommerce': {
+          'transactionTotal': total,
+          'products': cart
+        }
+      });
+
+      cart = []; // Clear cart
+      showPage('thank-you');
+    }
+
+    // Function to handle contact form submission
+    function submitForm(event) {
+      event.preventDefault();
+
+      // Clear error messages
+      document.getElementById('nameError').textContent = '';
+      document.getElementById('emailError').textContent = '';
+      document.getElementById('messageError').textContent = '';
+
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const message = document.getElementById('message').value;
+
+      let valid = true;
+
+      // Basic validation
+      if (name.trim() === '') {
+        document.getElementById('nameError').textContent = 'Name is required.';
+        valid = false;
+      }
+
+      if (email.trim() === '') {
+        document.getElementById('emailError').textContent = 'Email is required.';
+        valid = false;
+      } else if (!/\S+@\S+\.\S+/.test(email)) {
+        document.getElementById('emailError').textContent = 'Please enter a valid email address.';
+        valid = false;
+      }
+
+      if (message.trim() === '') {
+        document.getElementById('messageError').textContent = 'Message is required.';
+        valid = false;
+      }
+
+      if (valid) {
+        // Data layer push for 'formSubmit' event
+        window.dataLayer.push({
+          'event': 'formSubmit',
+          'form': {
+            'name': name,
+            'email': email,
+            'message': message
+          }
+        });
+
+        alert('Thank you for contacting us!');
+        event.target.reset(); // Reset form after successful submission
+      }
+    }
+
+    // Show Products page by default
+    showPage('products');
+  </script>
+</body>
+</html>
